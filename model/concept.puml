@@ -1,0 +1,50 @@
+@startuml
+
+rectangle "乗車区間 ( Ride Section )\n\n--\n\n乗車駅と降車駅\n・東京 ( Tokyo )\n・新大阪 ( Shin Osaka )\n・姫路 ( Himeji )\n\n--\n\n営業キロ ( Operating Kilometer )\n・実キロではなく料金計算に用いられる距離\n　採算調整や開業直後の料金調整のため、\n　実キロをもとに定められる" as ride_section
+
+rectangle "列車 ( Train )\n・ひかり ( Hikari )\n・のぞみ ( Nozomi )" as train
+
+rectangle "座席種別 ( Seat Type )\n・指定席 ( Reserved )\n・自由席 ( Free )" as seat_type
+
+rectangle "出発日\n\n--\n\n出発日 ( Departure Date )\n\n--\n\n季節 ( Season )\n・通常期 ( Regular )\n・閑散期 ( Off Peak )\n　1/16~1/30\n・繁忙期 ( Peak )\n　12/25~1/10" as departure_date
+
+rectangle "予約種別 ( Reserve Type )\n・片道 ( Single Trip )\n・往復 ( Round Trip )" as reserve_type
+
+rectangle "乗車人数 ( Number Of Passengers )\n・おとな人数 ( Adult )\n・こども人数 ( Child )" as number_of_passengers
+
+rectangle "総料金 ( Total Fare )" as total_fare
+rectangle "片道おとな料金 ( Single Trip Adult Fare )\n・運賃と特急料金の和" as single_trip_adult_fare
+rectangle "運賃 ( Train Fare )\n・10円単位切り捨て\n・営業キロで定まる" as train_fare
+rectangle "特急料金 ( Express Fare )\n・10円単位切り捨て\n・以下のいずれか\n\n指定席ひかり料金 ( Hikari Fare )\n・営業キロで定まる\n\n指定席のぞみ料金 ( Nozomi Fare )\n・営業キロで定まる\n\n自由席料金 ( Free Seat Fare )\n・Hikari Fare - 固定値" as express_fare
+
+single_trip_adult_fare -d-> train_fare
+single_trip_adult_fare -d-> express_fare
+
+file "こども料金 ( Child Fare )\n・運賃の半額と特急料金の半額を加算して算出する" as child_fare #ffffcc
+
+child_fare -r- single_trip_adult_fare
+
+file "特急料金の季節変動 ( Express Fare Seasonal Fluctuations )\n・指定席の場合、閑散期は-200円\n・指定席の場合、繁忙期は+200円" as express_fare_seasonal_fluctuations #ffffcc
+
+train_fare --> ride_section
+express_fare --> ride_section
+express_fare --> train
+express_fare --> seat_type
+express_fare -r- express_fare_seasonal_fluctuations
+express_fare_seasonal_fluctuations -u- departure_date
+
+file "往復割引 ( Round Trip Discount )\n・片道601km以上の場合はゆきとかえりが90%になる" as round_trip_discount #ffffcc
+file "団体割引 ( Group Discount )\n・8~30人の場合、繁忙期は10%オフ\n　通常期と閑散期は15%オフ\n・31~50人の場合、おとな1人分の料金が無料\n・51人以上は50人ごとにおとな1人分の料金が無料" as group_discount #ffffcc
+
+train_fare -l- round_trip_discount
+round_trip_discount -- ride_section
+
+group_discount -l- number_of_passengers
+group_discount -d- departure_date
+
+total_fare -d- group_discount
+group_discount -d- single_trip_adult_fare
+
+total_fare -r-> reserve_type
+
+@enduml

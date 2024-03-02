@@ -1,0 +1,142 @@
+@startuml
+
+class "片道おとな料金 ( SingleTripAdultFare )" as single_trip_adult_fare <<(S, lightblue)>> {
+    - train_fare: TrainFare
+    - express_fare: ExpressFare
+    + おとな料金を取得(self) -> (TrainFare, ExpressFare)
+    + こども料金を取得(self) -> (TrainFare, ExpressFare)
+}
+
+class "運賃 ( TrainFare )" as train_fare <<(S, lightblue)>> {
+    - value: Amount
+}
+
+class "運賃ファクトリ ( TrainFareFactory )" as train_fare_factory <<(F, lightgreen)>> {
+    + 算出(RideSection) -> TrainFare
+}
+
+class "特急料金 ( ExpressFare )" as express_fare <<(S, lightblue)>> {
+    - value: Amount
+}
+
+single_trip_adult_fare -d-> train_fare
+single_trip_adult_fare -d-> express_fare
+
+class "特急料金ファクトリ ( ExpressFareFactory )" as express_fare_factory <<(F, lightgreen)>> {
+    + 算出(Train, SeatType, RideSection, DepartureDate) -> ExpressFare
+    - 指定席ひかり料金を算出(kiro) -> ExpressFare
+    - 指定席のぞみ料金を算出(kiro) -> ExpressFare
+    - 自由席料金を算出(kiro) -> ExpressFare
+}
+
+class "総料金計算ドメインサービス ( TotalFareDomainService )" as total_fare_domain_service <<(F, lightgreen)>> {
+    + 算出(ReserveType, NumberOfPassengers, SingleTripAdultFare, List<OverallDiscount>, List<IndividualDiscount>) -> Amount
+}
+
+package base {
+    enum "列車 ( Train )" as train <<(E, lightpink)>> {
+        Hikari
+        Nozomi
+    }
+
+    enum "乗車区間 ( RideSection )" as ride_section <<(E, lightpink)>> {
+        - departure: Station
+        - arrival: Station
+        + 営業キロを取得(self) -> OperationKilometer
+    }
+
+    enum "駅 ( Station )" as station <<(E, lightpink)>> {
+        Tokyo
+        Shin Osaka
+        Himeji
+    }
+
+    ride_section -d-> station
+
+    class "出発日 ( DepartureDate )" as departure_date <<(S, lightblue)>> {
+        - value: Date
+        + 季節を取得(self) -> Season
+    }
+
+    enum "季節 ( Season )" as season <<(E, lightpink)>> {
+        Regular
+        Off Peak
+        Peak
+    }
+
+    departure_date -d-> season
+
+    enum "座席種別 ( SeatType )" as seat_type <<(E, lightpink)>> {
+        Reserved
+        Free
+    }
+
+    enum "予約種別 ( ReserveType )" as reserve_type <<(E, lightpink)>> {
+        Single Trip
+        Round Trip
+    }
+
+    class "乗車人数 ( NumberOfPassengers )" as number_of_passengers <<(S, lightblue)>> {
+        + adult: usize
+        + child: usize
+    }
+
+    note as base_note
+        本コンテキストで予約や検索のことは考慮しない
+
+        したがって乗車区間と列車の不整合はケアしない
+        また、出発日はシーズン判定に用いるものとして扱う
+    end note
+}
+
+package discount {
+    interface "個別割引 ( IndividualDiscount )" as individual_discount <<(T, orange)>> {
+        RoundTripDiscount
+        + 適用(TrainFare, ExpressFare) -> (TrainFare, ExpressFare)
+    }
+
+    enum "全体割引 ( OverallDiscount )" as overall_discount <<(S, lightblue)>> {
+        GroupDiscountUnder30 { Season }
+        GroupDiscountUnder50
+        GroupDiscountMore51 { usize }
+    }
+
+    class "個別割引ファクトリ ( IndividualDiscountFactory )" as individual_discount_factory <<(F, lightgreen)>> {
+        + 適用できる割引を算出(RideSection) -> List<IndividualDiscount>
+    }
+
+    class "全体割引ファクトリ ( OverallDiscountFactory )" as overall_discount_factory <<(F, lightgreen)>> {
+        + 適用できる割引を算出(RideSection) -> List<OverallDiscountFactory>
+    }
+
+    individual_discount_factory --> individual_discount
+    overall_discount_factory --> overall_discount
+}
+
+package fundamental {
+    class "金額 ( Amount )" as amount <<(S, lightblue)>> {
+        - value: u64
+        + +(self, rhs: Amount) -> Amount
+        + -(self, rhs: Amount) -> Amount
+        + *(self, rhs: Amount) -> Amount
+    }
+
+    class "営業キロ ( OperatingKilometer )" as amount <<(S, lightblue)>> {
+        - value: f64
+    }
+}
+
+train_fare_factory -u-> train_fare
+train_fare_factory --> ride_section
+
+express_fare_factory -u-> express_fare
+express_fare_factory --> base : 複数の要素に依存するため線を統合
+
+total_fare_domain_service -d-> single_trip_adult_fare
+total_fare_domain_service --> discount
+
+' layout
+
+base -d[hidden]-> fundamental
+
+@enduml
