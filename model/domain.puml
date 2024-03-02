@@ -24,9 +24,9 @@ single_trip_adult_fare -d-> express_fare
 
 class "特急料金ファクトリ ( ExpressFareFactory )" as express_fare_factory <<(F, lightgreen)>> {
     + 算出(Train, SeatType, RideSection, DepartureDate) -> ExpressFare
-    - 指定席ひかり料金を算出(kiro) -> ExpressFare
-    - 指定席のぞみ料金を算出(kiro) -> ExpressFare
-    - 自由席料金を算出(kiro) -> ExpressFare
+    - 指定席ひかり料金を算出(RideSection) -> ExpressFare
+    - 指定席のぞみ料金を算出(RideSection) -> ExpressFare
+    - 自由席料金を算出(RideSection) -> ExpressFare
 }
 
 class "総料金計算ドメインサービス ( TotalFareDomainService )" as total_fare_domain_service <<(F, lightgreen)>> {
@@ -39,7 +39,7 @@ package base {
         Nozomi
     }
 
-    enum "乗車区間 ( RideSection )" as ride_section <<(E, lightpink)>> {
+    class "乗車区間 ( RideSection )" as ride_section <<(S, lightblue)>> {
         - departure: Station
         - arrival: Station
         + 営業キロを取得(self) -> OperationKilometer
@@ -60,7 +60,7 @@ package base {
 
     enum "季節 ( Season )" as season <<(E, lightpink)>> {
         Regular
-        Off Peak
+        OffPeak
         Peak
     }
 
@@ -72,8 +72,8 @@ package base {
     }
 
     enum "予約種別 ( ReserveType )" as reserve_type <<(E, lightpink)>> {
-        Single Trip
-        Round Trip
+        SingleTrip
+        RoundTrip
     }
 
     class "乗車人数 ( NumberOfPassengers )" as number_of_passengers <<(S, lightblue)>> {

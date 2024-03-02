@@ -15,7 +15,7 @@ rectangle "乗車人数 ( Number Of Passengers )\n・おとな人数 ( Adult )\n
 rectangle "総料金 ( Total Fare )" as total_fare
 rectangle "片道おとな料金 ( Single Trip Adult Fare )\n・運賃と特急料金の和" as single_trip_adult_fare
 rectangle "運賃 ( Train Fare )\n・10円単位切り捨て\n・営業キロで定まる" as train_fare
-rectangle "特急料金 ( Express Fare )\n・10円単位切り捨て\n・以下のいずれか\n\n指定席ひかり料金 ( Hikari Fare )\n・営業キロで定まる\n\n指定席のぞみ料金 ( Nozomi Fare )\n・営業キロで定まる\n\n自由席料金 ( Free Seat Fare )\n・Hikari Fare - 固定値" as express_fare
+rectangle "特急料金 ( Express Fare )\n・10円単位切り捨て\n・以下のいずれか\n\n指定席ひかり料金 ( Hikari Fare )\n・乗車区間で定まる\n\n指定席のぞみ料金 ( Nozomi Fare )\n・乗車区間で定まる\n\n自由席料金 ( Free Seat Fare )\n・Hikari Fare - 固定値" as express_fare
 
 single_trip_adult_fare -d-> train_fare
 single_trip_adult_fare -d-> express_fare
