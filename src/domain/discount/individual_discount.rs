@@ -1,6 +1,7 @@
 use crate::domain::base::ride_section::RideSection;
 use crate::domain::discount::individual_discount::IndividualDiscount::RoundTripDiscount;
-use crate::domain::fare::fare::{ExpressFare, TrainFare};
+use crate::domain::fare::express_fare::ExpressFare;
+use crate::domain::fare::train_fare::TrainFare;
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum IndividualDiscount {
@@ -31,7 +32,8 @@ mod tests {
     use crate::domain::base::ride_section::{RideSection, Station};
     use crate::domain::discount::individual_discount::IndividualDiscount::RoundTripDiscount;
     use crate::domain::discount::individual_discount::{create_individual_discounts, IndividualDiscount};
-    use crate::domain::fare::fare::{ExpressFare, TrainFare};
+    use crate::domain::fare::express_fare::ExpressFare;
+    use crate::domain::fare::train_fare::TrainFare;
     use crate::fundamental::amount::Amount;
 
     #[rstest]

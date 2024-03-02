@@ -4,37 +4,9 @@ use crate::domain::base::seat_type::SeatType;
 use crate::domain::base::train::Train;
 use crate::fundamental::amount::Amount;
 
-pub struct SingleTripAdultFare {
-    train_fare: TrainFare,
-    express_fare: ExpressFare,
-}
-
-impl SingleTripAdultFare {
-    pub fn get_adult_fare(self) -> (TrainFare, ExpressFare) {
-        (self.train_fare, self.express_fare)
-    }
-
-    pub fn get_child_fare(self) -> (TrainFare, ExpressFare) {
-        (TrainFare { value: self.train_fare.value * 0.5 }, ExpressFare { value: self.express_fare.value * 0.5 })
-    }
-}
-
-#[derive(Eq, PartialEq, Debug)]
-pub struct TrainFare {
-    pub value: Amount,
-}
-
 #[derive(Eq, PartialEq, Debug)]
 pub struct ExpressFare {
     pub value: Amount,
-}
-
-pub fn create_train_fare(ride_section: &RideSection) -> TrainFare {
-    match ride_section.get_station_pair() {
-        (Station::Tokyo, Station::ShinOsaka) => TrainFare { value: Amount { value: 8910 } },
-        (Station::Tokyo, Station::Himeji) => TrainFare { value: Amount { value: 10010 } },
-        _ => panic!("unexpected ride section"),
-    }
 }
 
 pub fn create_express_fare(
@@ -95,18 +67,8 @@ mod tests {
     use crate::domain::base::seat_type::SeatType::*;
     use crate::domain::base::train::Train;
     use crate::domain::base::train::Train::*;
-    use crate::domain::fare::fare::{create_express_fare, create_train_fare, ExpressFare, TrainFare};
+    use crate::domain::fare::express_fare::{create_express_fare, ExpressFare};
     use crate::fundamental::amount::Amount;
-
-    #[rstest]
-    #[case(Tokyo, ShinOsaka, 8910)]
-    #[case(ShinOsaka, Tokyo, 8910)]
-    #[case(Tokyo, Himeji, 10010)]
-    #[case(Himeji, Tokyo, 10010)]
-    fn test_create_train_fare(#[case] departure: Station, #[case] arrival: Station, #[case] exp: u64) {
-        let ride_section = RideSection { departure, arrival };
-        assert_eq!(TrainFare { value: Amount { value: exp } }, create_train_fare(&ride_section));
-    }
 
     #[rstest]
     // ひかり指定席
