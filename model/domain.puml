@@ -118,10 +118,10 @@ package fundamental {
         - value: u64
         + +(self, rhs: Amount) -> Amount
         + -(self, rhs: Amount) -> Amount
-        + *(self, rhs: Amount) -> Amount
+        + *(self, rhs: usize) -> Amount
     }
 
-    class "営業キロ ( OperatingKilometer )" as amount <<(S, lightblue)>> {
+    class "営業キロ ( OperatingKilometer )" as operating_kilometer <<(S, lightblue)>> {
         - value: f64
     }
 }
