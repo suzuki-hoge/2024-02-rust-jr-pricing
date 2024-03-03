@@ -2,7 +2,7 @@ use crate::domain::base::ride_section::{RideSection, Station};
 
 use crate::fundamental::amount::Amount;
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub struct TrainFare {
     pub value: Amount,
 }

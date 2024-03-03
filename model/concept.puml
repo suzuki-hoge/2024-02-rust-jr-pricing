@@ -19,8 +19,9 @@ rectangle "特急料金 ( Express Fare )\n・10円単位切り捨て\n・以下�
 
 single_trip_adult_fare -d-> train_fare
 single_trip_adult_fare -d-> express_fare
+train_fare -r[hidden]-> express_fare
 
-file "こども料金 ( Child Fare )\n・運賃の半額と特急料金の半額を加算して算出する" as child_fare #ffffcc
+file "こども料金 ( Child Fare )\n・運賃の半額と特急料金の半額を加算して算出する\n\n--\n\n個別割引\n\n往復割引 ( Round Trip Discount )\n・片道601km以上の場合は運賃が90%になる\n\n団体割引\n・8~30人の場合、片道おとな料金を割り引く\n　繁忙期は10%オフ、通常期と閑散期は15%オフ" as child_fare #ffffcc
 
 child_fare -r- single_trip_adult_fare
 
@@ -33,18 +34,15 @@ express_fare --> seat_type
 express_fare -r- express_fare_seasonal_fluctuations
 express_fare_seasonal_fluctuations -u- departure_date
 
-file "往復割引 ( Round Trip Discount )\n・片道601km以上の場合はゆきとかえりが90%になる" as round_trip_discount #ffffcc
-file "団体割引 ( Group Discount )\n・8~30人の場合、繁忙期は10%オフ\n　通常期と閑散期は15%オフ\n・31~50人の場合、おとな1人分の料金が無料\n・51人以上は50人ごとにおとな1人分の料金が無料" as group_discount #ffffcc
+file "全体割引 ( Overall Discount )\n\n--\n\n・31~50人の場合、おとな1人分の料金が無料\n・51人以上は50人ごとにおとな1人分の料金が無料" as group_discount #ffffcc
 
-train_fare -l- round_trip_discount
-round_trip_discount -- ride_section
 
 group_discount -l- number_of_passengers
-group_discount -d- departure_date
 
 total_fare -d- group_discount
 group_discount -d- single_trip_adult_fare
 
 total_fare -r-> reserve_type
+total_fare --> number_of_passengers
 
 @enduml

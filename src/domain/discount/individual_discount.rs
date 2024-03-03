@@ -1,75 +1,121 @@
+use crate::domain::base::departure_date::Season;
+use crate::domain::base::number_of_passengers::NumberOfPassengers;
 use crate::domain::base::ride_section::RideSection;
-use crate::domain::discount::individual_discount::IndividualDiscount::RoundTripDiscount;
+use crate::domain::discount::individual_discount::IndividualDiscount::{GroupDiscountUnder30, RoundTripDiscount};
 use crate::domain::fare::express_fare::ExpressFare;
 use crate::domain::fare::train_fare::TrainFare;
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(PartialEq, Debug)]
 pub enum IndividualDiscount {
     RoundTripDiscount,
+    GroupDiscountUnder30 { discount_rate: f32 },
 }
 
 impl IndividualDiscount {
-    fn apply(&self, train_fare: TrainFare, express_fare: ExpressFare) -> (TrainFare, ExpressFare) {
+    pub fn apply(&self, fare: (TrainFare, ExpressFare)) -> (TrainFare, ExpressFare) {
         match self {
-            RoundTripDiscount => (TrainFare { value: train_fare.value * 0.9 }, express_fare),
+            RoundTripDiscount => (TrainFare { value: fare.0.value * 0.9 }, fare.1),
+            GroupDiscountUnder30 { discount_rate } => (
+                TrainFare { value: fare.0.value * *discount_rate },
+                ExpressFare { value: fare.1.value * *discount_rate },
+            ),
         }
     }
 }
 
-pub fn create_individual_discounts(ride_section: &RideSection) -> Vec<IndividualDiscount> {
+pub fn create_individual_discounts(
+    ride_section: &RideSection,
+    number_of_passengers: &NumberOfPassengers,
+    season: &Season,
+) -> Vec<IndividualDiscount> {
+    let mut discounts = vec![];
+
     if 601.0 <= ride_section.get_operation_kilometer().value {
-        vec![RoundTripDiscount]
-    } else {
-        vec![]
+        discounts.push(RoundTripDiscount)
     }
+    if (8..=30).contains(&number_of_passengers.total()) {
+        let discount_rate = match season {
+            Season::Regular => 0.85,
+            Season::OffPeak => 0.85,
+            Season::Peak => 0.9,
+        };
+        discounts.push(GroupDiscountUnder30 { discount_rate });
+    }
+
+    discounts
 }
 
 #[cfg(test)]
 mod tests {
+
     use rstest::rstest;
 
+    use crate::domain::base::departure_date::Season;
+    use crate::domain::base::departure_date::Season::*;
+    use crate::domain::base::number_of_passengers::NumberOfPassengers;
     use crate::domain::base::ride_section::Station::*;
     use crate::domain::base::ride_section::{RideSection, Station};
-    use crate::domain::discount::individual_discount::IndividualDiscount::RoundTripDiscount;
+    use crate::domain::discount::individual_discount::IndividualDiscount::{GroupDiscountUnder30, RoundTripDiscount};
     use crate::domain::discount::individual_discount::{create_individual_discounts, IndividualDiscount};
     use crate::domain::fare::express_fare::ExpressFare;
     use crate::domain::fare::train_fare::TrainFare;
     use crate::fundamental::amount::Amount;
 
     #[rstest]
-    #[case(Tokyo, ShinOsaka)]
-    fn test_create_individual_discounts_no_result(#[case] departure: Station, #[case] arrival: Station) {
+    #[case(Tokyo, ShinOsaka, 1, 0, Regular)]
+    #[case(Tokyo, ShinOsaka, 31, 0, Regular)]
+    #[case(Tokyo, ShinOsaka, 16, 15, Regular)]
+    fn test_create_individual_discounts_no_result(
+        #[case] departure: Station,
+        #[case] arrival: Station,
+        #[case] adult: usize,
+        #[case] child: usize,
+        #[case] season: Season,
+    ) {
         let ride_section = RideSection { departure, arrival };
-        assert_eq!(0, create_individual_discounts(&ride_section).len());
+        let number_of_passengers = NumberOfPassengers { adult, child };
+        assert_eq!(0, create_individual_discounts(&ride_section, &number_of_passengers, &season).len());
     }
 
     #[rstest]
-    #[case(Tokyo, Himeji, RoundTripDiscount)]
+    #[case(Tokyo, Himeji, 1, 0, Regular, RoundTripDiscount)]
+    #[case(Tokyo, ShinOsaka, 8, 0, Peak, GroupDiscountUnder30 { discount_rate: 0.9 })]
+    #[case(Tokyo, ShinOsaka, 8, 0, Regular, GroupDiscountUnder30 { discount_rate: 0.85 })]
+    #[case(Tokyo, ShinOsaka, 8, 0, OffPeak, GroupDiscountUnder30 { discount_rate: 0.85 })]
+    #[case(Tokyo, ShinOsaka, 4, 4, Regular, GroupDiscountUnder30 { discount_rate: 0.85 })]
+    #[case(Tokyo, ShinOsaka, 15, 15, Regular, GroupDiscountUnder30 { discount_rate: 0.85 })]
     fn test_create_individual_discounts(
         #[case] departure: Station,
         #[case] arrival: Station,
+        #[case] adult: usize,
+        #[case] child: usize,
+        #[case] season: Season,
         #[case] exp: IndividualDiscount,
     ) {
         let ride_section = RideSection { departure, arrival };
-        let act = create_individual_discounts(&ride_section);
+        let number_of_passengers = NumberOfPassengers { adult, child };
+        let act = create_individual_discounts(&ride_section, &number_of_passengers, &season);
         assert_eq!(1, act.len());
         assert_eq!(exp, act[0]);
     }
 
     #[rstest]
-    #[case(10010, 5920, 9000, 5920)]
-    fn round_trip_discount(
+    #[case(RoundTripDiscount, 10010, 5920, 9000, 5920)]
+    #[case(GroupDiscountUnder30 { discount_rate: 0.9 }, 8910, 5490, 8010, 4940)]
+    #[case(GroupDiscountUnder30 { discount_rate: 0.85 }, 8910, 5490, 7570, 4660)]
+    fn apply(
+        #[case] sut: IndividualDiscount,
         #[case] train_fare: u64,
         #[case] express_fare: u64,
         #[case] applied_train_fare: u64,
         #[case] applied_express_fare: u64,
     ) {
-        let train_fare = TrainFare { value: Amount { value: train_fare } };
-        let express_fare = ExpressFare { value: Amount { value: express_fare } };
+        let fare =
+            (TrainFare { value: Amount { value: train_fare } }, ExpressFare { value: Amount { value: express_fare } });
         let exp = (
             TrainFare { value: Amount { value: applied_train_fare } },
             ExpressFare { value: Amount { value: applied_express_fare } },
         );
-        assert_eq!(exp, RoundTripDiscount.apply(train_fare, express_fare));
+        assert_eq!(exp, sut.apply(fare));
     }
 }

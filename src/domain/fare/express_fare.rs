@@ -4,7 +4,7 @@ use crate::domain::base::seat_type::SeatType;
 use crate::domain::base::train::Train;
 use crate::fundamental::amount::Amount;
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub struct ExpressFare {
     pub value: Amount,
 }

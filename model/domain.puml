@@ -3,8 +3,8 @@
 class "片道おとな料金 ( SingleTripAdultFare )" as single_trip_adult_fare <<(S, lightblue)>> {
     - train_fare: TrainFare
     - express_fare: ExpressFare
-    + おとな料金を取得(self) -> (TrainFare, ExpressFare)
-    + こども料金を取得(self) -> (TrainFare, ExpressFare)
+    + おとな料金を取得(&self) -> (&TrainFare, &ExpressFare)
+    + こども料金を取得(&self) -> (&TrainFare, &ExpressFare)
 }
 
 class "運賃 ( TrainFare )" as train_fare <<(S, lightblue)>> {
@@ -30,7 +30,7 @@ class "特急料金ファクトリ ( ExpressFareFactory )" as express_fare_facto
 }
 
 class "総料金計算ドメインサービス ( TotalFareDomainService )" as total_fare_domain_service <<(F, lightgreen)>> {
-    + 算出(ReserveType, NumberOfPassengers, SingleTripAdultFare, Vec<OverallDiscount>, Vec<IndividualDiscount>) -> Amount
+    + 算出(ReserveType, NumberOfPassengers, SingleTripAdultFare, Option<OverallDiscount>, Vec<IndividualDiscount>) -> Amount
 }
 
 package base {
@@ -93,20 +93,20 @@ package base {
 package discount {
     enum "個別割引 ( IndividualDiscount )" as individual_discount <<(E, lightpink)>> {
         RoundTripDiscount
+        GroupDiscountUnder30 { 割引率: f32 }
         + 適用(TrainFare, ExpressFare) -> (TrainFare, ExpressFare)
     }
 
     enum "全体割引 ( OverallDiscount )" as overall_discount <<(E, lightpink)>> {
-        GroupDiscountUnder30 { 割引率: f32 }
         GroupDiscountMore31 { 無料人数: usize }
     }
 
     class "個別割引ファクトリ ( IndividualDiscountFactory )" as individual_discount_factory <<(F, lightgreen)>> {
-        + 適用できる割引を算出(&RideSection) -> Vec<IndividualDiscount>
+        + 適用できる割引を算出(&RideSection, &NumberOfPassengers, &Season) -> Vec<IndividualDiscount>
     }
 
     class "全体割引ファクトリ ( OverallDiscountFactory )" as overall_discount_factory <<(F, lightgreen)>> {
-        + 適用できる割引を算出(&NumberOfPassengers, &Season) -> Vec<OverallDiscountFactory>
+        + 適用できる割引を算出(&NumberOfPassengers) -> Option<OverallDiscountFactory>
     }
 
     individual_discount_factory --> individual_discount
