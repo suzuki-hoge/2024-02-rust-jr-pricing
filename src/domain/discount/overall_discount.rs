@@ -8,7 +8,7 @@ pub enum OverallDiscount {
     GroupDiscountMore31 { free_count: usize },
 }
 
-pub fn judge_overall_discounts(number_of_passengers: &NumberOfPassengers) -> Option<OverallDiscount> {
+pub fn judge_overall_discount(number_of_passengers: &NumberOfPassengers) -> Option<OverallDiscount> {
     if 31 <= number_of_passengers.total() {
         let free_count = max(number_of_passengers.total() / 50, 1);
         Some(GroupDiscountMore31 { free_count })
@@ -23,7 +23,7 @@ mod tests {
 
     use crate::domain::base::number_of_passengers::NumberOfPassengers;
     use crate::domain::discount::overall_discount::OverallDiscount::*;
-    use crate::domain::discount::overall_discount::{judge_overall_discounts, OverallDiscount};
+    use crate::domain::discount::overall_discount::{judge_overall_discount, OverallDiscount};
 
     #[rstest]
     #[case(1, 0)]
@@ -32,7 +32,7 @@ mod tests {
     #[case(0, 7)]
     fn test_create_overall_discounts_no_result(#[case] adult: usize, #[case] child: usize) {
         let number_of_passengers = NumberOfPassengers { adult, child };
-        assert_eq!(None, judge_overall_discounts(&number_of_passengers));
+        assert_eq!(None, judge_overall_discount(&number_of_passengers));
     }
 
     #[rstest]
@@ -43,6 +43,6 @@ mod tests {
     #[case(100, 0, GroupDiscountMore31 { free_count: 2 })]
     fn test_create_overall_discounts(#[case] adult: usize, #[case] child: usize, #[case] exp: OverallDiscount) {
         let number_of_passengers = NumberOfPassengers { adult, child };
-        assert_eq!(exp, judge_overall_discounts(&number_of_passengers).unwrap());
+        assert_eq!(exp, judge_overall_discount(&number_of_passengers).unwrap());
     }
 }
