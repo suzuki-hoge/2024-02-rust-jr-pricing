@@ -7,11 +7,15 @@ class "片道おとな料金 ( SingleTripAdultFare )" as single_trip_adult_fare 
     + こども料金を取得(&self) -> (&TrainFare, &ExpressFare)
 }
 
+class "片道おとな料金計算ドメインサービス" as single_trip_adult_fare_domain_service <<(F, lightgreen)>> {
+    + 算出(...) -> SingleTripAdultFare\n// 運賃と特急料金のドメインサービスに委譲
+}
+
 class "運賃 ( TrainFare )" as train_fare <<(S, lightblue)>> {
     - value: Amount
 }
 
-class "運賃ファクトリ ( TrainFareFactory )" as train_fare_factory <<(F, lightgreen)>> {
+class "運賃計算ドメインサービス" as train_fare_domain_service <<(F, lightgreen)>> {
     + 算出(&RideSection) -> TrainFare
 }
 
@@ -22,14 +26,14 @@ class "特急料金 ( ExpressFare )" as express_fare <<(S, lightblue)>> {
 single_trip_adult_fare -d-> train_fare
 single_trip_adult_fare -d-> express_fare
 
-class "特急料金ファクトリ ( ExpressFareFactory )" as express_fare_factory <<(F, lightgreen)>> {
+class "特急料金計算ドメインサービス" as express_fare_domain_service <<(F, lightgreen)>> {
     + 算出(&Train, &SeatType, &RideSection, &DepartureDate) -> ExpressFare
     - 指定席ひかり料金を算出(RideSection) -> ExpressFare
     - 指定席のぞみ料金を算出(RideSection) -> ExpressFare
     - 自由席料金を算出(RideSection) -> ExpressFare
 }
 
-class "総料金計算ドメインサービス ( TotalFareDomainService )" as total_fare_domain_service <<(F, lightgreen)>> {
+class "総料金計算ドメインサービス" as total_fare_domain_service <<(F, lightgreen)>> {
     + 算出(ReserveType, NumberOfPassengers, SingleTripAdultFare, Option<OverallDiscount>, Vec<IndividualDiscount>) -> Amount
 }
 
@@ -101,16 +105,17 @@ package discount {
         GroupDiscountMore31 { 無料人数: usize }
     }
 
-    class "個別割引ファクトリ ( IndividualDiscountFactory )" as individual_discount_factory <<(F, lightgreen)>> {
+    class "個別割引判定ドメインサービス" as individual_discount_domain_service <<(F, lightgreen)>> {
         + 適用できる割引を算出(&RideSection, &NumberOfPassengers, &Season) -> Vec<IndividualDiscount>
     }
 
-    class "全体割引ファクトリ ( OverallDiscountFactory )" as overall_discount_factory <<(F, lightgreen)>> {
+    class "全体割引判定ドメインサービス" as overall_discount_domain_service <<(F, lightgreen)>> {
         + 適用できる割引を算出(&NumberOfPassengers) -> Option<OverallDiscountFactory>
     }
 
-    individual_discount_factory --> individual_discount
-    overall_discount_factory --> overall_discount
+    individual_discount_domain_service --> individual_discount
+    overall_discount_domain_service --> overall_discount
+    overall_discount -[hidden]d-> individual_discount_domain_service
 }
 
 package fundamental {
@@ -126,14 +131,15 @@ package fundamental {
     }
 }
 
-train_fare_factory -u-> train_fare
-train_fare_factory --> ride_section
+single_trip_adult_fare_domain_service -r-> single_trip_adult_fare
+train_fare_domain_service -u-> train_fare
+train_fare_domain_service --> ride_section
 
-express_fare_factory -u-> express_fare
-express_fare_factory --> base : 複数の要素に依存するため線を統合
+express_fare_domain_service -u-> express_fare
+express_fare_domain_service --> base : 複数の要素に依存するため線を統合
 
 total_fare_domain_service -d-> single_trip_adult_fare
-total_fare_domain_service --> discount
+total_fare_domain_service -r-> discount
 
 ' layout
 

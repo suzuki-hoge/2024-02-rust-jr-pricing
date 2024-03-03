@@ -21,9 +21,15 @@ impl IndividualDiscount {
             ),
         }
     }
+    // この作りだと (train * rate + express * rate) はできるが (train + express) * rate ができない
+    // 仕様がはっきりしないので前者で濁すが、要再設計
+
+    // 0.9 を 2 度適用した場合の切り捨てタイミングが不明瞭
+    // 個別切り捨てだと 0.85 -> 0.9 と 0.9 -> 0.85 で結果が変わるため 0.765 を適用する方がよさそう
+    // ほかにどのような割引を考慮するべきかわからないと汎用化できないため、暫定で個別適用とする
 }
 
-pub fn create_individual_discounts(
+pub fn judge_individual_discounts(
     ride_section: &RideSection,
     number_of_passengers: &NumberOfPassengers,
     season: &Season,
@@ -56,7 +62,7 @@ mod tests {
     use crate::domain::base::ride_section::Station::*;
     use crate::domain::base::ride_section::{RideSection, Station};
     use crate::domain::discount::individual_discount::IndividualDiscount::{GroupDiscountUnder30, RoundTripDiscount};
-    use crate::domain::discount::individual_discount::{create_individual_discounts, IndividualDiscount};
+    use crate::domain::discount::individual_discount::{judge_individual_discounts, IndividualDiscount};
     use crate::domain::fare::express_fare::ExpressFare;
     use crate::domain::fare::train_fare::TrainFare;
     use crate::fundamental::amount::Amount;
@@ -74,7 +80,7 @@ mod tests {
     ) {
         let ride_section = RideSection { departure, arrival };
         let number_of_passengers = NumberOfPassengers { adult, child };
-        assert_eq!(0, create_individual_discounts(&ride_section, &number_of_passengers, &season).len());
+        assert_eq!(0, judge_individual_discounts(&ride_section, &number_of_passengers, &season).len());
     }
 
     #[rstest]
@@ -94,7 +100,7 @@ mod tests {
     ) {
         let ride_section = RideSection { departure, arrival };
         let number_of_passengers = NumberOfPassengers { adult, child };
-        let act = create_individual_discounts(&ride_section, &number_of_passengers, &season);
+        let act = judge_individual_discounts(&ride_section, &number_of_passengers, &season);
         assert_eq!(1, act.len());
         assert_eq!(exp, act[0]);
     }

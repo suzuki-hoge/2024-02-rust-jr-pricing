@@ -7,7 +7,7 @@ pub struct TrainFare {
     pub value: Amount,
 }
 
-pub fn create_train_fare(ride_section: &RideSection) -> TrainFare {
+pub fn calc_train_fare(ride_section: &RideSection) -> TrainFare {
     match ride_section.get_station_pair() {
         (Station::Tokyo, Station::ShinOsaka) => TrainFare { value: Amount { value: 8910 } },
         (Station::Tokyo, Station::Himeji) => TrainFare { value: Amount { value: 10010 } },
@@ -23,7 +23,7 @@ mod tests {
     use crate::domain::base::ride_section::Station::*;
     use crate::domain::base::ride_section::{RideSection, Station};
 
-    use crate::domain::fare::train_fare::{create_train_fare, TrainFare};
+    use crate::domain::fare::train_fare::{calc_train_fare, TrainFare};
     use crate::fundamental::amount::Amount;
 
     #[rstest]
@@ -33,6 +33,6 @@ mod tests {
     #[case(Himeji, Tokyo, 10010)]
     fn test_create_train_fare(#[case] departure: Station, #[case] arrival: Station, #[case] exp: u64) {
         let ride_section = RideSection { departure, arrival };
-        assert_eq!(TrainFare { value: Amount { value: exp } }, create_train_fare(&ride_section));
+        assert_eq!(TrainFare { value: Amount { value: exp } }, calc_train_fare(&ride_section));
     }
 }

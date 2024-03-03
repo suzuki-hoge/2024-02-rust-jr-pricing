@@ -9,7 +9,7 @@ pub struct ExpressFare {
     pub value: Amount,
 }
 
-pub fn create_express_fare(
+pub fn calc_express_fare(
     train: &Train,
     seat_type: &SeatType,
     ride_section: &RideSection,
@@ -67,7 +67,7 @@ mod tests {
     use crate::domain::base::seat_type::SeatType::*;
     use crate::domain::base::train::Train;
     use crate::domain::base::train::Train::*;
-    use crate::domain::fare::express_fare::{create_express_fare, ExpressFare};
+    use crate::domain::fare::express_fare::{calc_express_fare, ExpressFare};
     use crate::fundamental::amount::Amount;
 
     #[rstest]
@@ -140,7 +140,7 @@ mod tests {
         let departure_date = DepartureDate { value: NaiveDate::from_ymd_opt(2024, m, d).unwrap() };
         assert_eq!(
             ExpressFare { value: Amount { value: exp } },
-            create_express_fare(&train, &seat_type, &ride_section, &departure_date)
+            calc_express_fare(&train, &seat_type, &ride_section, &departure_date)
         );
     }
 }
