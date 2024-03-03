@@ -1,3 +1,6 @@
+run:
+	@cargo run
+
 lint:
 	@cargo +nightly fmt
 	@cargo fix --allow-dirty --allow-staged

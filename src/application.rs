@@ -8,8 +8,10 @@ use crate::domain::base::seat_type::SeatType;
 use crate::domain::base::train::Train;
 use crate::domain::discount::individual_discount::judge_individual_discounts;
 use crate::domain::discount::overall_discount::judge_overall_discount;
-use crate::domain::fare::fare::{calc_single_trip_adult_fare, calc_total_fare};
+use crate::domain::fare::single_trip_adult_fare::calc_single_trip_adult_fare;
+use crate::domain::fare::total_fare::calc_total_fare;
 
+#[allow(clippy::too_many_arguments)]
 pub fn invoke(
     departure_input: StationInput,
     arrival_input: StationInput,
